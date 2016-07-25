@@ -16,6 +16,6 @@
   
   command: python setup.py
   
-  update the target list in myspider.py
+  update the target list in pokemon_spider.py
   
-  command: scrapy runspider myspider.py
+  command: python main.py
