@@ -6,7 +6,7 @@ except ImportError:
 setup(
     name="pokemonscanner",
     author="Xinyang Zhang",
-    author_email="paul@freelancer.com",
+    author_email="sydefz@gmail.com",
     version=0.1,
     description="Pokemon Go Scanner",
     install_requires=[
