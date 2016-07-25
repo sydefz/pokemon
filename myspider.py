@@ -65,7 +65,7 @@ class PokemonSpider(scrapy.Spider):
                     r['longitude'],
                     r['expiration_time'] - time.time())
                   )
-            self.found_list.push(r['id'])
+            self.found_list.append(r['id'])
             yield wanted
 
     def prepare_data(self):
