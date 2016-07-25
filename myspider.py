@@ -6,6 +6,7 @@ import random
 import pyglet
 import logging
 import os
+import copy
 from time import sleep
 
 class PokemonSpider(scrapy.Spider):
@@ -21,12 +22,14 @@ class PokemonSpider(scrapy.Spider):
     found_list = []
 
     def parse(self, response):
-        my_dict = self.prepare_data()
+        original_dict = self.prepare_data()
         # repeat scan all sydney suburbs
         for i in range(9999):
+            my_dict = copy.copy(original_dict)
             # randomly pass 20 items on each scan
             for _ in range(20):
-                my_dict.pop( random.choice(list(my_dict)) )
+                key = random.choice(list(my_dict))
+                my_dict.pop( key )
 
             for _ in range(len(my_dict)):
                 latlon = my_dict.pop( random.choice(list(my_dict)) )
