@@ -25,14 +25,16 @@ class PokemonSpider(scrapy.Spider):
         # repeat scan all sydney suburbs
         for i in range(9999):
             # randomly pass 20 items on each scan
-            for i in range(20):
+            for _ in range(20):
                 my_dict.pop( random.choice(list(my_dict)) )
 
-            for key, latlon in my_dict.items():
-                lat = random.uniform(-0.0125, 0.0125)
-                lon = random.uniform(-0.0125, 0.0125)
+            for _ in range(len(my_dict)):
+                latlon = my_dict.pop( random.choice(list(my_dict)) )
+                lat_adjust = random.uniform(-0.0125, 0.0125)
+                lon_adjust = random.uniform(-0.0125, 0.0125)
                 
-                new_url = 'https://pokevision.com/map/data/%f/%f' % (latlon[0]+lat, latlon[1]+lon)
+                new_url = 'https://pokevision.com/map/data/%f/%f' % \
+                          (latlon[0]+lat_adjust, latlon[1]+lon_adjust)
                 sleep(1.5)
                 yield scrapy.Request(response.urljoin(new_url), self.parse_titles)
 
@@ -93,7 +95,7 @@ class PokemonSpider(scrapy.Spider):
         return my_dict
 
     def get_missing(self):
-        return [68, 71, 76, 89, 94, 137, 141]
+        return [68, 76, 89, 94, 137, 141]
 
     def get_fav(self):
         return [143, 134, 149, 131, 76, 9]
