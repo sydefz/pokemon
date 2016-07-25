@@ -22,10 +22,13 @@ class PokemonSpider(scrapy.Spider):
 
     def parse(self, response):
         my_dict = self.prepare_data()
-        for i in range(0, 9999):
-            for i in range(0, 200):
-                key = random.choice(list(my_dict))
-                latlon = my_dict[key]
+        # repeat scan all sydney suburbs
+        for i in range(9999):
+            # randomly pass 20 items on each scan
+            for i in range(20):
+                my_dict.pop( random.choice(list(my_dict)) )
+
+            for key, latlon in my_dict.items():
                 lat = random.uniform(-0.0125, 0.0125)
                 lon = random.uniform(-0.0125, 0.0125)
                 
@@ -90,10 +93,11 @@ class PokemonSpider(scrapy.Spider):
         return my_dict
 
     def get_missing(self):
-        return [68, 71, 76, 89, 94, 137, 139, 141]
+        return [68, 71, 76, 89, 94, 137, 141]
 
     def get_fav(self):
-        return [143, 134, 149, 131, 76, 80, 9]
+        return [143, 134, 149, 131, 76, 9]
+        # 80
 
     def get_impossible(self):
         return [150, 151, 144, 145, 146, 132, 128, 122, 83]
