@@ -13,6 +13,7 @@ class PokemonSpider(scrapy.Spider):
     logging.getLogger('scrapy').propagate = False
     logging.getLogger('scrapy').setLevel(logging.ERROR)
     print('Scaning...')
+    min_interval = interval = 3
     name = 'pokemon'
     start_urls = ['https://pokevision.com/']
     path = os.getcwd()
@@ -38,7 +39,7 @@ class PokemonSpider(scrapy.Spider):
                 
                 new_url = 'https://pokevision.com/map/data/%f/%f' % \
                           (latlon[0]+lat_adjust, latlon[1]+lon_adjust)
-                sleep(1.5)
+                sleep(self.interval)
                 yield scrapy.Request(response.urljoin(new_url), self.parse_titles)
 
     def check(self, poke):
@@ -56,6 +57,7 @@ class PokemonSpider(scrapy.Spider):
             rawdata = response.body.decode("ascii")
             data = json.loads(rawdata)
         except UnicodeDecodeError:
+            print('%s: invalid response' % self.get_time_string())
             return
 
         result = [p for p in data['pokemon'] if self.check(p)]
@@ -70,13 +72,11 @@ class PokemonSpider(scrapy.Spider):
             self.player.delete()
             self.player.queue(self.sound)
             self.player.play()
-            datetime_string = datetime.datetime.fromtimestamp(
-                time.time()
-            ).strftime('%H:%M:%S')
+
             wanted = {'#': r['pokemonId'], 'lat': r['latitude'], 'lon': r['longitude']}
             print('%s: Found #%d %s, lat %f and lon %f, despawn in %d sec' % \
                   (
-                    datetime_string,
+                    self.get_time_string(),
                     r['pokemonId'],
                     self.get_name(r['pokemonId']),
                     r['latitude'],
@@ -101,7 +101,7 @@ class PokemonSpider(scrapy.Spider):
         return my_dict
 
     def get_missing(self):
-        return [68, 76, 89, 94, 137, 141]
+        return [68, 76, 89, 94, 141]
 
     def get_fav(self):
         return [143, 134, 149, 131, 76, 9]
@@ -109,6 +109,11 @@ class PokemonSpider(scrapy.Spider):
 
     def get_impossible(self):
         return [150, 151, 144, 145, 146, 132, 128, 122, 83]
+
+    def get_time_string(self):
+        return datetime.datetime.fromtimestamp(
+            time.time()
+        ).strftime('%H:%M:%S')
 
     def my_data(self):
         mylist = [
