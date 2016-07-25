@@ -1,5 +1,6 @@
 import scrapy
 import json
+import datetime
 import time
 import random
 import pyglet
@@ -49,23 +50,35 @@ class PokemonSpider(scrapy.Spider):
         result = [p for p in data['pokemon'] if self.check(p)]
 
         for r in result:
-            if r['id'] in self.found_list:
+            # id is not unique, uid is not unique
+            # fine... longitude must be unique
+            if r['longitude'] in self.found_list:
                 continue
             
             self.player.pause()
             self.player.delete()
             self.player.queue(self.sound)
             self.player.play()
+            datetime_string = datetime.datetime.fromtimestamp(
+                time.time()
+            ).strftime('%H:%M:%S')
             wanted = {'#': r['pokemonId'], 'lat': r['latitude'], 'lon': r['longitude']}
-            print('Found #%d %s, lat %f and lon %f, despawn in %d sec' % \
+            print('%s: Found #%d %s, lat %f and lon %f, despawn in %d sec' % \
                   (
+                    datetime_string,
                     r['pokemonId'],
                     self.get_name(r['pokemonId']),
                     r['latitude'],
                     r['longitude'],
-                    r['expiration_time'] - time.time())
+                    r['expiration_time'] - time.time()
                   )
-            self.found_list.append(r['id'])
+              )
+
+            # keep found_list short, throw the first 5 if excess 10
+            if len(self.found_list) > 10:
+                self.found_list = self.found_list[5:]
+
+            self.found_list.append(r['longitude'])
             yield wanted
 
     def prepare_data(self):
@@ -77,7 +90,7 @@ class PokemonSpider(scrapy.Spider):
         return my_dict
 
     def get_missing(self):
-        return [68, 71, 76, 89, 94, 110, 113, 132, 137, 139, 141]
+        return [68, 71, 76, 89, 94, 137, 139, 141]
 
     def get_fav(self):
         return [143, 134, 149, 131, 76, 80, 9]
