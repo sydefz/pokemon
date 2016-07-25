@@ -14,6 +14,8 @@
 
   **How to use:**
   
-  python setup.py
+  command: python setup.py
   
-  scrapy runspider myspider.py
+  update the target list in myspider.py
+  
+  command: scrapy runspider myspider.py
