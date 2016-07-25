@@ -52,8 +52,11 @@ class PokemonSpider(scrapy.Spider):
         if response.status != 200:
             return
 
-        rawdata = response.body.decode("ascii")
-        data = json.loads(rawdata)
+        try:
+            rawdata = response.body.decode("ascii")
+            data = json.loads(rawdata)
+        except UnicodeDecodeError:
+            return
 
         result = [p for p in data['pokemon'] if self.check(p)]
 
