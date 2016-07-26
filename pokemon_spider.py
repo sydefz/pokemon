@@ -1,23 +1,33 @@
-import scrapy
 import json
 import datetime
 import time
 import random
 import pyglet
-import logging
 import os
 import copy
+from configparser import ConfigParser
 from data import names, postcode
 from time import sleep
 
 class PokemonSpider():
-    min_interval = interval = 10
+    min_interval = 3
+    max_interval = 15
     base_url = 'https://pokevision.com/'
+    found_list = []
+
+    # get config
     path = os.getcwd()
+    configfile = os.path.join(
+        path,
+        '{}.cfg'.format(os.environ.get('ENVIRONMENT', 'dev'))
+    )
+    config = ConfigParser(allow_no_value=True)
+    config.optionxform = str
+
+    # get sound
     fullpath = os.path.join(path, '6856.wav')
     sound = pyglet.media.load(fullpath, streaming=False)
     player = pyglet.media.Player()
-    found_list = []
 
     def __init__(self, scraper):
         self.scraper = scraper
@@ -36,17 +46,20 @@ class PokemonSpider():
                 latlon = my_dict.pop( random.choice(list(my_dict)) )
                 lat_adjust = random.uniform(-0.0125, 0.0125)
                 lon_adjust = random.uniform(-0.0125, 0.0125)
-                
+                interval = random.uniform( self.min_interval, self.max_interval)
+
                 new_url = '%s/map/data/%f/%f' % \
                           (self.base_url, latlon[0]+lat_adjust, latlon[1]+lon_adjust)
-                print("%s: %s" % (self.get_time_string(), new_url))
+                # print("%s: %s" % (self.get_time_string(), new_url))
                 content = self.scraper.get(new_url).content
                 self.parse(content)
-                sleep(self.interval)
-                # yield scrapy.Request(response.urljoin(new_url), self.parse_titles)
+                sleep(int(interval))
 
     def check(self, poke):
-        candidates = self.get_fav() + self.get_missing() + self.get_impossible()
+        self.config.read(self.configfile)
+        candidates = self.get_targets('missing') + \
+                     self.get_targets('fav') + \
+                     self.get_targets('lucky')
         if poke['pokemonId'] in candidates and poke['is_alive']:
             if poke['expiration_time'] - 300 > time.time():
                 return True
@@ -58,6 +71,9 @@ class PokemonSpider():
             data = json.loads(rawdata)
         except UnicodeDecodeError:
             print('%s: invalid response' % self.get_time_string())
+            return
+        except Exception:
+            print('%s: unknown error' % self.get_time_string())
             return
 
         result = [p for p in data['pokemon'] if self.check(p)]
@@ -75,22 +91,21 @@ class PokemonSpider():
 
             wanted = {'#': r['pokemonId'], 'lat': r['latitude'], 'lon': r['longitude']}
             print('%s: Found #%d %s, lat %f and lon %f, despawn in %d sec' % \
-                  (
+                (
                     self.get_time_string(),
                     r['pokemonId'],
                     self.get_name(r['pokemonId']),
                     r['latitude'],
                     r['longitude'],
                     r['expiration_time'] - time.time()
-                  )
-              )
+                )
+            )
 
-            # keep found_list short, throw the first 5 if excess 10
-            if len(self.found_list) > 10:
-                self.found_list = self.found_list[5:]
+            # keep found_list short, throw the first 50 if excess 100
+            if len(self.found_list) > 100:
+                self.found_list = self.found_list[50:]
 
             self.found_list.append(r['longitude'])
-            # yield wanted
 
     def prepare_data(self):
         data = self.my_data()
@@ -100,16 +115,8 @@ class PokemonSpider():
             my_dict[d['code']] = (d['lat'], d['lon'])
         return my_dict
 
-    def get_missing(self):
-        return [68, 76, 89, 94, 141]
-
-    def get_fav(self):
-        return [143, 134, 149, 131, 76, 9]
-        # 80
-
-    def get_impossible(self):
-        return [150, 151, 144, 145, 146, 132, 128, 83]
-        # 122
+    def get_targets(self, category):
+        return json.loads( self.config.get('target', category) )
 
     def get_time_string(self):
         return datetime.datetime.fromtimestamp(
