@@ -45,8 +45,8 @@ class PokemonSpider():
 
             for _ in range(len(my_dict)):
                 latlon = my_dict.pop( random.choice(list(my_dict)) )
-                lat_adjust = random.uniform(-0.0125, 0.0125)
-                lon_adjust = random.uniform(-0.0125, 0.0125)
+                lat_adjust = random.uniform(-0.002, 0.002)
+                lon_adjust = random.uniform(-0.002, 0.002)
                 interval = int(random.uniform( self.min_interval, self.max_interval))
                 self.get_time_string(heartbeat=True)
                 new_url = '%s/map/data/%f/%f' % \
