@@ -6,14 +6,15 @@ import pyglet
 import os
 import copy
 from configparser import ConfigParser
-from data import names, postcode
+from data import names, postcode, selfadded
 from time import sleep
 
 class PokemonSpider():
-    min_interval = 3
-    max_interval = 15
+    min_interval = 4
+    max_interval = 4
     base_url = 'https://pokevision.com/'
     found_list = []
+    latest_print = time.time()
 
     # get config
     path = os.getcwd()
@@ -46,14 +47,14 @@ class PokemonSpider():
                 latlon = my_dict.pop( random.choice(list(my_dict)) )
                 lat_adjust = random.uniform(-0.0125, 0.0125)
                 lon_adjust = random.uniform(-0.0125, 0.0125)
-                interval = random.uniform( self.min_interval, self.max_interval)
-
+                interval = int(random.uniform( self.min_interval, self.max_interval))
+                self.get_time_string(heartbeat=True)
                 new_url = '%s/map/data/%f/%f' % \
                           (self.base_url, latlon[0]+lat_adjust, latlon[1]+lon_adjust)
-                # print("%s: %s" % (self.get_time_string(), new_url))
+                # print("%s: %s, sleep %d sec for next hop" % (self.get_time_string(), new_url, interval))
                 content = self.scraper.get(new_url).content
                 self.parse(content)
-                sleep(int(interval))
+                sleep(interval)
 
     def check(self, poke):
         self.config.read(self.configfile)
@@ -118,13 +119,17 @@ class PokemonSpider():
     def get_targets(self, category):
         return json.loads( self.config.get('target', category) )
 
-    def get_time_string(self):
+    def get_time_string(self, heartbeat = None):
+        current_time = time.time()
+        if heartbeat and current_time - 300 > self.latest_print:
+            self.latest_print = current_time
+            print("%s: still searching" % self.get_time_string())
         return datetime.datetime.fromtimestamp(
-            time.time()
+            current_time
         ).strftime('%H:%M:%S')
 
     def my_data(self):
-        return postcode
+        return postcode + selfadded
 
     def get_name(self, number):
         return names.get(number)
